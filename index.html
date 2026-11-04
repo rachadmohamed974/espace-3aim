@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Espace en ligne · 3AIM CFA</title><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{--navy:#1A3A6B;--navy2:#12213F;--or:#E87722;--bg:#F3F5F9;--card:#fff;--ink:#14213D;--mut:#5B6478;--line:#E1E5EE;--ok:#1F8A5B;--okbg:#E7F5EE;--wait:#B26A00;--waitbg:#FFF4E2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.5}
+header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:18px 16px 22px;border-bottom:4px solid var(--or)}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.top{display:flex;align-items:center;gap:12px}.top img{height:44px;background:#fff;border-radius:8px;padding:4px}.top .org{font-weight:800;font-size:18px}.top small{display:block;opacity:.8;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.hello{margin-top:14px;font-size:22px;font-weight:800}.hello span{display:block;font-size:14px;font-weight:400;opacity:.85}
+main{padding:18px 0 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 2px rgba(20,33,61,.04)}
+h2{font-size:18px;margin:0 0 4px}h3{font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin:16px 0 8px}
+.meta{display:grid;gap:8px;margin-top:10px}.meta div{display:flex;gap:10px;align-items:flex-start}.meta b{min-width:92px;color:var(--mut);font-weight:600;font-size:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:11px 14px;font-weight:700;font-size:15px;cursor:pointer;text-decoration:none;background:var(--navy);color:#fff}
+.btn.or{background:var(--or)}.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}.btn[disabled]{opacity:.6}
+.list{display:flex;flex-direction:column;gap:8px}.item{display:flex;align-items:center;gap:10px;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.item span{min-width:0;overflow-wrap:anywhere}.tag{font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--okbg);color:var(--ok)}.tag.wait{background:var(--waitbg);color:var(--wait)}.tag.todo{background:#EEF1F7;color:var(--mut)}
+.login{max-width:420px;margin:30px auto}.login input{width:100%;font-size:20px;letter-spacing:.12em;text-transform:uppercase;padding:12px;border:1px solid var(--line);border-radius:10px;margin:10px 0;text-align:center}
+.err{color:#B42318;font-size:14px;min-height:20px}.hint{color:var(--mut);font-size:14px}
+.steps{display:flex;flex-direction:column;gap:6px;margin-top:6px}.step{display:flex;justify-content:space-between;gap:10px;font-size:15px;border-bottom:1px dashed var(--line);padding:5px 0}
+footer{color:var(--mut);font-size:13px;text-align:center;padding:10px 16px 30px}
+a{color:var(--navy)}
+@media (max-width:480px){.meta b{min-width:80px}.hello{font-size:20px}}
+</style></head>
+<body>
+<header><div class="wrap"><div class="top" id="top"><div><div class="org">3AIM CFA</div><small>Espace en ligne</small></div></div><div class="hello" id="hello"></div></div></header>
+<main class="wrap" id="app"><div class="card"><p class="hint">Chargement…</p></div></main>
+<footer id="foot">Espace sécurisé : vos informations ne sont visibles qu'avec votre code personnel.</footer>
+<script>
+var API = "https://script.google.com/macros/s/AKfycbyI9dsjJUgnU6OCaxbrA191MsGhaEoVz8vPJCXPTSn9_s9lg0tp9FZZLqmfB0fxL2vt/exec";
+var CODE = (function(){try{var q=new URLSearchParams(location.search);return q.get("code")||q.get("c")||""}catch(e){return ""}})();
+function api(params,ok,ko){var u=API+"?"+Object.keys(params).map(function(k){return k+"="+encodeURIComponent(params[k])}).join("&");fetch(u,{credentials:"omit",redirect:"follow"}).then(function(r){return r.json()}).then(ok).catch(ko)}
+var DATA = null;
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function fd(d){try{return new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}catch(e){return d}}
+function store(k,v){try{if(v==null)sessionStorage.removeItem(k);else sessionStorage.setItem(k,v)}catch(e){}}
+function read(k){try{return sessionStorage.getItem(k)}catch(e){return null}}
+function login(msg){
+  $("#hello").textContent="";
+  $("#app").innerHTML='<div class="card login"><h2>Accéder à mon espace</h2><p class="hint">Saisissez le code personnel reçu par e-mail de 3AIM CFA.</p><input id="code" autocomplete="one-time-code" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="24"><div class="err" id="err">'+esc(msg||"")+'</div><button class="btn or" id="go" style="width:100%">Entrer</button><p class="hint" style="margin-top:14px">Pas de code ? Contactez 3AIM CFA au <a href="tel:+262692098592">0692 09 85 92</a>.</p></div>';
+  $("#go").onclick=function(){go($("#code").value)};$("#code").onkeydown=function(e){if(e.key==="Enter")go($("#code").value)};$("#code").focus();
+}
+function go(c){
+  c=String(c||"").trim();if(!c){login("Saisissez votre code.");return}
+  var b=$("#go");if(b){b.disabled=true;b.textContent="Vérification…"}
+  api({api:"espace",code:c},function(r){
+    if(!r||!r.ok){store("c",null);login(r&&r.msg||"Code inconnu.");return}
+    CODE=c;store("c",c);DATA=r.data;render();
+    try{history.replaceState(null,"",location.pathname)}catch(e){}
+  },function(e){login("Service momentanément indisponible. Réessayez dans un instant.")});
+}
+function dl(id,btn){
+  var t=btn.textContent;btn.disabled=true;btn.textContent="Ouverture…";
+  api({api:"file",code:CODE,id:id},function(f){
+    if(!f||!f.b64){btn.disabled=false;btn.textContent="Indisponible";alert("Ce document n'est pas disponible pour le moment.");return}
+    var bin=atob(f.b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    var url=URL.createObjectURL(new Blob([u],{type:f.mime||"application/pdf"}));var a=document.createElement("a");a.href=url;a.download=f.nom;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url)},60000);btn.disabled=false;btn.textContent=t;
+  },function(e){btn.disabled=false;btn.textContent="Indisponible";alert("Ce document n'est pas disponible pour le moment.")});
+}
+function docsHTML(docs){if(!docs||!docs.length)return "";return '<div class="list">'+docs.map(function(d){return '<div class="item"><span>📄 '+esc(d.label||d.nom)+'</span><button class="btn ghost" data-dl="'+esc(d.id)+'">Télécharger</button></div>'}).join("")+'</div>'}
+function questHTML(q){if(!q||!q.length)return "";return '<div class="list">'+q.map(function(x){return '<div class="item"><span>📝 '+esc(x.label)+'</span>'+(x.fait?'<span class="tag ok">✓ Répondu</span>':'<a class="btn or" href="'+esc(x.url)+'" target="_blank" rel="noopener">Répondre</a>')+'</div>'}).join("")+'</div>'}
+function render(){
+  var p=DATA,o=p.org||{};
+  if(o.logo)$("#top").innerHTML='<img src="'+o.logo+'" alt=""><div><div class="org">'+esc(o.nom||"3AIM CFA")+'</div><small>Espace '+(p.role==="client"?"entreprise":"stagiaire")+'</small></div>';
+  $("#hello").innerHTML="Bonjour "+esc(p.role==="client"?(p.contact||p.entreprise||""):(p.prenom||p.nom||""))+'<span>'+(p.role==="client"?esc(p.entreprise||"")+" · vos formations avec 3AIM CFA":"Toutes les informations sur votre formation")+'</span>';
+  var h="";
+  var ss=(p.sessions||[]).slice().sort(function(a,b){return String((b.dates||[""])[0]).localeCompare(String((a.dates||[""])[0]))});
+  if(!ss.length)h+='<div class="card"><p class="hint">Aucune formation pour le moment.</p></div>';
+  ss.forEach(function(s){
+    var dates=(s.dates||[]).map(fd);
+    h+='<div class="card"><h2>'+esc(s.intitule)+'</h2>'+(s.numero?'<div class="hint">Réf. '+esc(s.numero)+'</div>':'')+
+      '<div class="meta">'+(dates.length?'<div><b>Date'+(dates.length>1?'s':'')+'</b><span>'+dates.map(esc).join("<br>")+'</span></div>':'')+
+      (s.horaires?'<div><b>Horaires</b><span>'+esc(s.horaires)+'</span></div>':'')+
+      (s.lieu?'<div><b>Lieu</b><span>'+esc(s.lieu)+(s.lieuAdr?'<br>'+esc(s.lieuAdr)+'<br><a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(s.lieuAdr)+'" target="_blank" rel="noopener">Voir sur la carte</a>':'')+'</span></div>':'')+
+      (s.formateur?'<div><b>Formateur</b><span>'+esc(s.formateur)+'</span></div>':'')+
+      (s.stagiaires?'<div><b>Stagiaires</b><span>'+esc(s.stagiaires)+'</span></div>':'')+'</div>'+
+      (s.etapes&&s.etapes.length?'<h3>Avancement</h3><div class="steps">'+s.etapes.map(function(e){return '<div class="step"><span>'+esc(e.l)+'</span><span class="tag '+(e.e==="ok"?"ok":e.e==="wait"?"wait":"todo")+'">'+esc(e.t)+'</span></div>'}).join("")+'</div>':'')+
+      (s.infos?'<h3>À savoir</h3><p style="margin:0">'+esc(s.infos)+'</p>':'')+
+      (s.quest&&s.quest.length?'<h3>Questionnaires</h3>'+questHTML(s.quest):'')+
+      (s.docs&&s.docs.length?'<h3>Documents</h3>'+docsHTML(s.docs):'')+'</div>';
+  });
+  if(p.docs&&p.docs.length)h+='<div class="card"><h2>Autres documents</h2>'+docsHTML(p.docs)+'</div>';
+  h+='<div class="card"><h2>Une question ?</h2><div class="meta"><div><b>Téléphone</b><span><a href="tel:'+esc((o.tel||"").replace(/\s/g,""))+'">'+esc(o.tel||"")+'</a></span></div><div><b>E-mail</b><span><a href="mailto:'+esc(o.email||"")+'">'+esc(o.email||"")+'</a></span></div><div><b>Adresse</b><span>'+esc(o.adresse||"")+'</span></div>'+(o.referent?'<div><b>Handicap</b><span>Référent handicap : '+esc(o.referent)+' — nous adaptons la formation si besoin.</span></div>':'')+'</div>'+
+    '<div style="margin-top:14px"><button class="btn ghost" id="out">Se déconnecter</button></div></div>';
+  $("#app").innerHTML=h;
+  $("#foot").textContent="Informations mises à jour le "+(p.maj?new Date(p.maj).toLocaleDateString("fr-FR"):"")+" · "+(o.nom||"3AIM CFA")+(o.qualiopi?" · Certifié Qualiopi n° "+o.qualiopi:"");
+  Array.prototype.forEach.call(document.querySelectorAll("[data-dl]"),function(b){b.onclick=function(){dl(b.getAttribute("data-dl"),b)}});
+  $("#out").onclick=function(){store("c",null);CODE="";DATA=null;login("")};
+}
+(function(){var c=CODE||read("c");if(c)go(c);else login("")})();
+</script>
+</body></html>

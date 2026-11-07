@@ -97,10 +97,10 @@ function go(c){
 }
 var SEEN={};
 function seenKey(){return "seen_"+String(CODE||"").toUpperCase().replace(/[^A-Z0-9]/g,"")}
-function loadSeen(){SEEN={};(DATA&&DATA.seen||[]).forEach(function(i){SEEN[i]=1});try{JSON.parse(localStorage.getItem(seenKey())||"[]").forEach(function(i){SEEN[i]=1})}catch(e){}}
-function markSeen(id){SEEN[id]=1;try{localStorage.setItem(seenKey(),JSON.stringify(Object.keys(SEEN)))}catch(e){}
+var DLD={};function loadSeen(){DLD={};try{JSON.parse(localStorage.getItem(seenKey()+"_dl")||"[]").forEach(function(i){DLD[i]=1})}catch(e){}SEEN={};(DATA&&DATA.seen||[]).forEach(function(i){SEEN[i]=1});try{JSON.parse(localStorage.getItem(seenKey())||"[]").forEach(function(i){SEEN[i]=1})}catch(e){}}
+function markSeen(id,dl){SEEN[id]=1;try{localStorage.setItem(seenKey(),JSON.stringify(Object.keys(SEEN)))}catch(e){}if(dl){DLD[id]=1;try{localStorage.setItem(seenKey()+"_dl",JSON.stringify(Object.keys(DLD)))}catch(e){}}
   Array.prototype.forEach.call(document.querySelectorAll('[data-new="'+id+'"]'),function(x){x.remove()});
-  Array.prototype.forEach.call(document.querySelectorAll('[data-dl="'+id+'"]'),function(b){b.textContent="Téléchargé ✓"});
+  if(dl)Array.prototype.forEach.call(document.querySelectorAll('[data-dl="'+id+'"]'),function(b){b.textContent="Téléchargé ✓"});else Array.prototype.forEach.call(document.querySelectorAll('[data-see="'+id+'"]'),function(b){b.textContent="👁 Vu ✓"});
   if(VIEW==="docs"){Array.prototype.forEach.call(document.querySelectorAll('[data-item="'+id+'"]'),function(x){x.style.opacity=".55"})}
   updBadges()}
 function allDocs(p){var a=(p.docs||[]).slice();(p.sessions||[]).forEach(function(s){a=a.concat(s.docs||[])});var u={};return a.filter(function(d){if(u[d.id])return false;u[d.id]=1;return true})}
@@ -120,7 +120,7 @@ function see(id,btn){
     function close(){ov.remove();URL.revokeObjectURL(url);document.removeEventListener("keydown",esc_)}
     function esc_(e){if(e.key==="Escape")close()}
     ov.addEventListener("click",function(e){if(e.target===ov||e.target.getAttribute("data-close"))close()});document.addEventListener("keydown",esc_);
-    document.body.appendChild(ov);markSeen(id);
+    document.body.appendChild(ov);markSeen(id,false);
   },function(e){btn.disabled=false;btn.textContent=t;alert("Ce document n'est pas disponible pour le moment.")});
 }
 function dl(id,btn){
@@ -129,10 +129,10 @@ function dl(id,btn){
     if(!f||!f.b64){btn.disabled=false;btn.textContent="Indisponible";alert("Ce document n'est pas disponible pour le moment.");return}
     var bin=atob(f.b64),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
     var url=URL.createObjectURL(new Blob([u],{type:f.mime||"application/pdf"}));var a=document.createElement("a");a.href=url;a.download=f.nom;document.body.appendChild(a);a.click();a.remove();
-    setTimeout(function(){URL.revokeObjectURL(url)},60000);btn.disabled=false;btn.textContent=t;markSeen(id);
+    setTimeout(function(){URL.revokeObjectURL(url)},60000);btn.disabled=false;btn.textContent=t;markSeen(id,true);
   },function(e){btn.disabled=false;btn.textContent="Indisponible";alert("Ce document n'est pas disponible pour le moment.")});
 }
-function docsHTML(docs){if(!docs||!docs.length)return "";return '<div class="list">'+docs.map(function(d){var n=!SEEN[d.id];return '<div class="item" data-item="'+esc(d.id)+'"><span>📄 '+esc(d.label||d.nom)+(d.sign?' <span class="tag sign">À signer</span>':'')+(n?' <span class="tag new" data-new="'+esc(d.id)+'">Nouveau</span>':'')+(d.sign?'<span class="signhint">✍️ '+esc(d.sign)+'</span>':'')+'</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-see="'+esc(d.id)+'">👁 Voir</button><button class="btn ghost" data-dl="'+esc(d.id)+'">'+(n?"Télécharger":"Télécharger à nouveau")+'</button></span></div>'}).join("")+'</div>'}
+function docsHTML(docs){if(!docs||!docs.length)return "";return '<div class="list">'+docs.map(function(d){var n=!SEEN[d.id];return '<div class="item" data-item="'+esc(d.id)+'"><span>📄 '+esc(d.label||d.nom)+(d.sign?' <span class="tag sign">À signer</span>':'')+(n?' <span class="tag new" data-new="'+esc(d.id)+'">Nouveau</span>':'')+(d.sign?'<span class="signhint">✍️ '+esc(d.sign)+'</span>':'')+'</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-see="'+esc(d.id)+'">'+(SEEN[d.id]?"👁 Revoir":"👁 Voir")+'</button><button class="btn ghost" data-dl="'+esc(d.id)+'">'+(DLD[d.id]?"Télécharger à nouveau":"Télécharger")+'</button></span></div>'}).join("")+'</div>'}
 function qk(u){return 'qc_'+String(u||'').slice(-48)}
 function questHTML(q){if(!q||!q.length)return "";return '<div class="list">'+q.map(function(x){var c=0;try{c=+localStorage.getItem(qk(x.url))||0}catch(e){}return '<div class="item"><span>📝 '+esc(x.label)+(c&&!x.fait?'<br><small class="hint">Réponse envoyée ? Elle sera prise en compte dans quelques minutes, puis ce questionnaire disparaîtra.</small>':'')+'</span>'+(x.fait?'<span class="tag ok">✓ Répondu</span>':'<a class="btn or" data-qurl="'+esc(x.url)+'" href="'+esc(x.url)+'" target="_blank" rel="noopener">'+(c?'Rouvrir':'Répondre')+'</a>')+'</div>'}).join("")+'</div>'}
 document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[data-qurl]');if(!a)return;try{localStorage.setItem(qk(a.getAttribute('data-qurl')),String(Date.now()))}catch(x){}setTimeout(function(){try{render()}catch(x){}},600)});
